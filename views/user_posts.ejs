@@ -1,0 +1,58 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Publicaciones de <%= user.name %></title>
+</head>
+<body>
+  <h1>Publicaciones de <%= user.name %></h1>
+  <ul>
+    <% posts.forEach(post => { %>
+      <li><%= post.content %></li>
+    <% }); %>
+  </ul>
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Publicaciones del Usuario</title>
+  <!-- <link rel="stylesheet" href="/path/to/your/styles.css"> -->
+  <link rel='stylesheet' href='/stylesheets/style.css' />
+</head>
+
+<body>
+  <div class="container">
+    <h1>Publicaciones de <%= user.name %>
+    </h1>
+
+    <div class="posts-list">
+      <% if (posts && posts.length> 0) { %>
+        <% posts.forEach(post=> { %>
+          <div class="post">
+            <h2>
+              <%= post.title %>
+            </h2>
+            <p>
+              <%= post.description %>
+            </p>
+            <% if (post.url_multimedia) { %>
+              <img src="<%= post.url_multimedia %>" alt="Multimedia de <%= post.title %>" class="post-image">
+              <% } %>
+                <small>Publicado por el usuario: <%= user.username %></small>
+          </div>
+          <% }); %>
+            <% } else { %>
+              <p>No hay publicaciones disponibles.</p>
+              <% } %>
+    </div>
+  </div>
+</body>
+
+</html>
