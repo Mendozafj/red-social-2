@@ -3,7 +3,7 @@ const { v4: uuidv4 } = require('uuid');
 
 class CommentsModel {
   // Método para crear un nuevo comentario
-  create(comment) {
+  async create(comment) {
     return new Promise((resolve, reject) => {
       comment.id = uuidv4(); // Genera un nuevo ID
       const query = 'INSERT INTO comments (id, content, post_id, user_id) VALUES (?, ?, ?, ?)';
@@ -16,7 +16,7 @@ class CommentsModel {
   }
 
   // Método para mostrar todos los comentarios
-  show() {
+  async show() {
     return new Promise((resolve, reject) => {
       const query = 'SELECT * FROM comments';
 
@@ -27,7 +27,7 @@ class CommentsModel {
   }
 
   // Método para mostrar un comentario por su ID
-  showByID(id) {
+  async showByID(id) {
     return new Promise((resolve, reject) => {
       const query = 'SELECT * FROM comments WHERE id = ?';
 
@@ -38,7 +38,7 @@ class CommentsModel {
   }
 
   // Método para mostrar comentarios por ID de publicación
-  showByPostID(post_id) {
+  async showByPostID(post_id) {
     return new Promise((resolve, reject) => {
       const query = 'SELECT * FROM comments WHERE post_id = ?';
 
@@ -49,7 +49,7 @@ class CommentsModel {
   }
 
   // Método para editar un comentario por su ID
-  edit(updatedComment, id) {
+  async edit(updatedComment, id) {
     return new Promise((resolve, reject) => {
       const query = 'UPDATE comments SET content = ? WHERE id = ?';
       const values = [updatedComment.content, id];
@@ -61,7 +61,7 @@ class CommentsModel {
   }
 
   // Método para eliminar un comentario por su ID
-  delete(id) {
+  async delete(id) {
     return new Promise((resolve, reject) => {
       const query = 'DELETE FROM comments WHERE id = ?';
 

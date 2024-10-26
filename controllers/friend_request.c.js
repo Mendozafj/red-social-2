@@ -59,8 +59,6 @@ class FriendRequestController {
         return { error: `No se encontró la solicitud de amistad con id: ${id}` };
       }
 
-      console.log(friendRequest)
-
       if (friendRequest.status == "aceptada" || friendRequest.status == "rechazada") {
         return { error: `No se puede editar la solicitud de amistad` };
       }

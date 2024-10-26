@@ -3,7 +3,7 @@ const { v4: uuidv4 } = require('uuid');
 
 class FriendRequestsModel {
   // Método para crear una nueva solicitud de amistad
-  create(friendRequest) {
+  async create(friendRequest) {
     return new Promise((resolve, reject) => {
       friendRequest.id = uuidv4(); 
       const query = 'INSERT INTO friend_requests (id, sender_id, receiver_id, status) VALUES (?, ?, ?, ?)';
@@ -16,7 +16,7 @@ class FriendRequestsModel {
   }
 
   // Método para mostrar todas las solicitudes de amistad
-  show() {
+  async show() {
     return new Promise((resolve, reject) => {
       const query = 'SELECT * FROM friend_requests';
 
@@ -27,7 +27,7 @@ class FriendRequestsModel {
   }
 
   // Método para mostrar una solicitud de amistad por su ID
-  showByID(id) {
+  async showByID(id) {
     return new Promise((resolve, reject) => {
       const query = 'SELECT * FROM friend_requests WHERE id = ?';
 
@@ -38,7 +38,7 @@ class FriendRequestsModel {
   }
 
   // Método para mostrar solicitudes de amistad por ID de usuario receptor
-  showByUserID(receiver_id) {
+  async showByUserID(receiver_id) {
     return new Promise((resolve, reject) => {
       const query = 'SELECT * FROM friend_requests WHERE receiver_id = ?';
 
@@ -49,7 +49,7 @@ class FriendRequestsModel {
   }
 
   // Método para editar una solicitud de amistad por su ID
-  edit(updatedFriendRequest, id) {
+  async edit(updatedFriendRequest, id) {
     return new Promise((resolve, reject) => {
       const query = 'UPDATE friend_requests SET status = ? WHERE id = ?';
       const values = [updatedFriendRequest.status, id];
@@ -61,7 +61,7 @@ class FriendRequestsModel {
   }
 
   // Método para eliminar una solicitud de amistad por su ID
-  delete(id) {
+  async delete(id) {
     return new Promise((resolve, reject) => {
       const query = 'DELETE FROM friend_requests WHERE id = ?';
 

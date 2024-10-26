@@ -16,7 +16,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const friendship = await friendshipController.showByID(req.params.id);
-    if (!friendship[0]) {
+    if (!friendship) {
       return res.status(404).send(`No se encontró la amistad con id: ${req.params.id}`);
     }
     res.status(200).send(friendship);

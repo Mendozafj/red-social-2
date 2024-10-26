@@ -1,36 +1,30 @@
-var friendsModel = require("../models/friendships.m");
+const friendsModel = require("../models/friendships.m");
 
 class FriendsController {
+  // Método para mostrar todas las amistades
   async show() {
-    try {
-      const friendships = friendsModel.show();
-      return friendships;
-    } catch (err) {
-      throw new Error(`Error al listar las amistades: ${err}`);
-    }
+    return friendsModel.show()
+      .then(friendships => friendships)
+      .catch(error => { throw new Error(`Error al listar las amistades: ${error}`); });
   }
 
+  // Método para mostrar una amistad por su ID
   async showByID(id) {
-    try {
-      const friendship = friendsModel.showByID(id);
-      return friendship;
-    } catch (err) {
-      throw new Error(`Error al buscar amistad: ${err}`);
-    }
+    return friendsModel.showByID(id)
+      .then(friendship => friendship)
+      .catch(error => { throw new Error(`Error al buscar amistad: ${error}`); });
   }
 
+  // Método para eliminar una amistad por su ID
   async delete(id) {
-    try {
-      const friendship = friendsModel.showByID(id);
-      if (friendship.length === 0) {
-        return { error: `No se encontró la amistad con id: ${id}` };
-      }
-
-      const result = friendsModel.delete(id);
-      return result;
-    } catch (err) {
-      throw new Error(`Error al eliminar amistad: ${err}`);
-    }
+    return friendsModel.showByID(id)
+      .then(friendship => {
+        if (!friendship) {
+          return { error: `No se encontró la amistad con id: ${id}` };
+        }
+        return friendsModel.delete(id);
+      })
+      .catch(error => { throw new Error(`Error al eliminar amistad: ${error}`); });
   }
 }
 
