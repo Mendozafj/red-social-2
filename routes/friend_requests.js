@@ -29,7 +29,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const friendRequest = await friendRequestController.showByID(req.params.id);
-    if (!friendRequest[0]) {
+    if (!friendRequest) {
       return res.status(404).send(`No se encontró la solicitud de amistad con id: ${req.params.id}`);
     }
     res.status(200).send(friendRequest);

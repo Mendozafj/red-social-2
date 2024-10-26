@@ -1,6 +1,6 @@
-var friendRequestModel = require("../models/friend_request.m");
-var usersModel = require("../models/users.m");
-var friendshipsModel = require("../models/friendships.m");
+const friendRequestModel = require("../models/friend_request.m");
+const usersModel = require("../models/users.m");
+const friendshipsModel = require("../models/friendships.m");
 
 class FriendRequestController {
   async create(data) {
@@ -10,18 +10,22 @@ class FriendRequestController {
     }
 
     try {
-      const user1 = usersModel.showByID(sender_id);
-      if (user1.length === 0) {
+      const user1 = await usersModel.showByID(sender_id);
+      if (!user1) {
         return { error: `No se encontró el usuario con id: ${sender_id}` };
       }
 
-      const user2 = usersModel.showByID(receiver_id);
-      if (user2.length === 0) {
+      const user2 = await usersModel.showByID(receiver_id);
+      if (!user2) {
         return { error: `No se encontró el usuario con id: ${receiver_id}` };
       }
 
+      if (user1.username == user2.username) {
+        return { error: `Los usuarios deben ser diferentes` };
+      }
+
       const newFriendRequest = { sender_id, receiver_id, status: "pendiente" };
-      friendRequestModel.create(newFriendRequest);
+      await friendRequestModel.create(newFriendRequest);
 
       return { success: true };
     } catch (error) {
@@ -31,7 +35,7 @@ class FriendRequestController {
 
   async show() {
     try {
-      const friendRequests = friendRequestModel.show();
+      const friendRequests = await friendRequestModel.show();
       return friendRequests;
     } catch (err) {
       throw new Error(`Error al listar las solicitudes de amistad: ${err}`);
@@ -40,7 +44,7 @@ class FriendRequestController {
 
   async showByID(id) {
     try {
-      const friendRequest = friendRequestModel.showByID(id);
+      const friendRequest = await friendRequestModel.showByID(id);
       return friendRequest;
     } catch (err) {
       throw new Error(`Error al buscar solicitudes de amistad: ${err}`);
@@ -50,40 +54,27 @@ class FriendRequestController {
   async update(id, data) {
     const { status } = data;
     try {
-      const friendRequest = friendRequestModel.showByID(id);
-      if (friendRequest.length === 0) {
-        return { error: `No se encontró la solicitude de amistad con id: ${id}` };
+      const friendRequest = await friendRequestModel.showByID(id);
+      if (!friendRequest) {
+        return { error: `No se encontró la solicitud de amistad con id: ${id}` };
       }
 
-      if (friendRequest[0].status == "aceptada" || friendRequest[0].status == "rechazada") {
+      console.log(friendRequest)
+
+      if (friendRequest.status == "aceptada" || friendRequest.status == "rechazada") {
         return { error: `No se puede editar la solicitud de amistad` };
       }
 
-      const user1 = usersModel.showByID(friendRequest[0].sender_id);
-      if (user1.length === 0) {
-        return { error: `No se encontró el usuario con id: ${friendRequest[0].sender_id}` };
-      }
-
-      const user2 = usersModel.showByID(friendRequest[0].receiver_id);
-      if (user2.length === 0) {
-        return { error: `No se encontró el usuario con id: ${friendRequest[0].receiver_id}` };
-      }
-
-      const updatedFriendRequest = {
-        ...friendRequest[0],
-        status: status ? status : friendRequest.status
-      };
-
       if (status == "aceptada") {
         const newFriendships = {
-          user_id_1: updatedFriendRequest.sender_id,
-          user_id_2: updatedFriendRequest.receiver_id
+          user_id_1: friendRequest.sender_id,
+          user_id_2: friendRequest.receiver_id
         };
-        friendshipsModel.create(newFriendships);
+        await friendshipsModel.create(newFriendships);
       }
 
-      const result = friendRequestModel.edit(updatedFriendRequest, id);
-      return result;
+      const result = await friendRequestModel.edit({ status }, id);
+      return result ? { success: true } : { error: "No se pudo actualizar la solicitud" };
     } catch (err) {
       throw new Error(`Error al editar solicitud de amistad: ${err}`);
     }
@@ -91,13 +82,13 @@ class FriendRequestController {
 
   async delete(id) {
     try {
-      const friendRequest = friendRequestModel.showByID(id);
-      if (friendRequest.length === 0) {
+      const friendRequest = await friendRequestModel.showByID(id);
+      if (!friendRequest) {
         return { error: `No se encontró la solicitud de amistad con id: ${id}` };
       }
 
-      const result = friendRequestModel.delete(id);
-      return result;
+      const result = await friendRequestModel.delete(id);
+      return result ? { success: true } : { error: "No se pudo eliminar la solicitud" };
     } catch (err) {
       throw new Error(`Error al eliminar solicitud de amistad: ${err}`);
     }
