@@ -29,7 +29,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const comment = await commentsController.showByID(req.params.id);
-    if (!comment[0]) {
+    if (!comment) {
       return res.status(404).send(`No se encontró el comentario con id: ${req.params.id}`);
     }
     res.status(200).send(comment);

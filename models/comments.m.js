@@ -1,41 +1,74 @@
+const pool = require('../config/db');
 const { v4: uuidv4 } = require('uuid');
 
-let commentsDB = [
-  {
-    id: "1",
-    content: "Comentario 1",
-    post_id: "1",
-    user_id: "1"
-  }
-]
-
 class CommentsModel {
+  // Método para crear un nuevo comentario
   create(comment) {
-    comment.id = uuidv4();
-    commentsDB.push(comment);
+    return new Promise((resolve, reject) => {
+      comment.id = uuidv4(); // Genera un nuevo ID
+      const query = 'INSERT INTO comments (id, content, post_id, user_id) VALUES (?, ?, ?, ?)';
+      const values = [comment.id, comment.content, comment.post_id, comment.user_id];
+
+      pool.query(query, values)
+        .then(([result]) => resolve({ id: comment.id, ...comment }))
+        .catch(error => reject(error));
+    });
   }
 
+  // Método para mostrar todos los comentarios
   show() {
-    return commentsDB;
+    return new Promise((resolve, reject) => {
+      const query = 'SELECT * FROM comments';
+
+      pool.query(query)
+        .then(([rows]) => resolve(rows))
+        .catch(error => reject(error));
+    });
   }
 
+  // Método para mostrar un comentario por su ID
   showByID(id) {
-    return commentsDB.filter(comment => comment.id == id);
+    return new Promise((resolve, reject) => {
+      const query = 'SELECT * FROM comments WHERE id = ?';
+
+      pool.query(query, [id])
+        .then(([rows]) => resolve(rows[0]))
+        .catch(error => reject(error));
+    });
   }
 
+  // Método para mostrar comentarios por ID de publicación
   showByPostID(post_id) {
-    return commentsDB.filter(comment => comment.post_id == post_id);
+    return new Promise((resolve, reject) => {
+      const query = 'SELECT * FROM comments WHERE post_id = ?';
+
+      pool.query(query, [post_id])
+        .then(([rows]) => resolve(rows))
+        .catch(error => reject(error));
+    });
   }
 
-  edit(updatedComments, id) {
-    const index = commentsDB.findIndex(comment => comment.id == id);
-    return commentsDB[index] = { id, ...updatedComments };
+  // Método para editar un comentario por su ID
+  edit(updatedComment, id) {
+    return new Promise((resolve, reject) => {
+      const query = 'UPDATE comments SET content = ? WHERE id = ?';
+      const values = [updatedComment.content, id];
+
+      pool.query(query, values)
+        .then(([result]) => resolve(result.affectedRows))
+        .catch(error => reject(error));
+    });
   }
 
+  // Método para eliminar un comentario por su ID
   delete(id) {
-    const index = commentsDB.findIndex(comment => comment.id == id);
-    commentsDB.splice(index, 1);
-    return commentsDB;
+    return new Promise((resolve, reject) => {
+      const query = 'DELETE FROM comments WHERE id = ?';
+
+      pool.query(query, [id])
+        .then(([result]) => resolve(result.affectedRows))
+        .catch(error => reject(error));
+    });
   }
 }
 

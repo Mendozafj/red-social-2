@@ -10,20 +10,20 @@ class CommentsController {
     }
 
     try {
-      const post = postsModel.showByID(post_id);
-      if (post.length === 0) {
-        return { error: `No se encontró la publicación con id: ${user_id}` };
+      const post = await postsModel.showByID(post_id);
+      if (!post) {
+        return { error: `No se encontró la publicación con id: ${post_id}` };
       }
 
-      const user = usersModel.showByID(user_id);
-      if (user.length === 0) {
+      const user = await usersModel.showByID(user_id);
+      if (!user) {
         return { error: `No se encontró el usuario con id: ${user_id}` };
       }
 
-      const newComments = { content, post_id, user_id };
-      commentsModel.create(newComments);
+      const newComment = { content, post_id, user_id };
+      const result = await commentsModel.create(newComment);
 
-      return { success: true };
+      return { success: true, comment: result };
     } catch (error) {
       return { error: `Error al crear el comentario: ${error.message}` };
     }
@@ -31,7 +31,7 @@ class CommentsController {
 
   async show() {
     try {
-      const comments = commentsModel.show();
+      const comments = await commentsModel.show();
       return comments;
     } catch (err) {
       throw new Error(`Error al listar los comentarios: ${err}`);
@@ -40,7 +40,7 @@ class CommentsController {
 
   async showByID(id) {
     try {
-      const comment = commentsModel.showByID(id);
+      const comment = await commentsModel.showByID(id);
       return comment;
     } catch (err) {
       throw new Error(`Error al buscar el comentario: ${err}`);
@@ -50,18 +50,18 @@ class CommentsController {
   async update(id, data) {
     const { content } = data;
     try {
-      const comment = commentsModel.showByID(id);
-      if (comment.length === 0) {
+      const comment = await commentsModel.showByID(id);
+      if (!comment) {
         return { error: `No se encontró el comentario con id: ${id}` };
       }
 
       const updatedComment = {
-        ...comment[0],
+        ...comment,
         content: content ? content : comment.content,
       };
 
-      const result = commentsModel.edit(updatedComment, id);
-      return result;
+      const result = await commentsModel.edit(updatedComment, id);
+      return { success: true, updatedComment: result };
     } catch (err) {
       throw new Error(`Error al editar comentario: ${err}`);
     }
@@ -69,13 +69,13 @@ class CommentsController {
 
   async delete(id) {
     try {
-      const comment = commentsModel.showByID(id);
-      if (comment.length === 0) {
+      const comment = await commentsModel.showByID(id);
+      if (!comment) {
         return { error: `No se encontró el comentario con id: ${id}` };
       }
 
-      const result = commentsModel.delete(id);
-      return result;
+      await commentsModel.delete(id);
+      return { success: true };
     } catch (err) {
       throw new Error(`Error al eliminar comentario: ${err}`);
     }
