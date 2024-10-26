@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var usersController = require("../controllers/users.c");
+var commentsModel = require("../models/comments.m");
 
 /* POST registrar usuarios */
 router.post('/', async (req, res) => {
@@ -48,12 +49,38 @@ router.get('/:id/posts', async (req, res) => {
       return res.status(404).send(`No se encontró el usuario con id: ${req.params.id}`);
     }
 
+    // Obtener publicaciones del usuario
     const posts = await usersController.showPosts(id);
-    res.status(200).render('user_posts', { user, posts });  // Renderiza la vista 'user_posts.ejs'
+
+    // Crea un array de promesas para obtener los usuarios de cada publicación
+    const userPromises = posts.map(post => {
+      return usersController.showByID(post.user_id); // Asumiendo que cada post tiene un user_id
+    });
+
+    // Espera a que todas las promesas se resuelvan
+    const users = await Promise.all(userPromises);
+
+    // Combina publicaciones con sus respectivos usuarios
+    const postsWithUsers = posts.map((post, index) => ({
+      ...post,
+      user: users[index], // Agrega el usuario a cada publicación
+    }));
+
+    // Obtener comentarios para cada publicación
+    const postsWithComments = await Promise.all(
+      postsWithUsers.map(async (post) => {
+        const comments = await commentsModel.showByPostID(post.id); // Asegúrate de que este método exista
+        return { ...post, comments }; // Agrega los comentarios a la publicación
+      })
+    );
+
+    res.status(200).render('user_posts', { user, posts: postsWithComments });  // Renderiza la vista 'user_posts.ejs'
   } catch (err) {
     res.status(500).send(`Error al buscar las publicaciones del usuario: ${err}`);
   }
 });
+
+
 
 /* GET mostrar usuario por username */
 router.get('/username/:username', async (req, res) => {
@@ -76,27 +103,32 @@ router.get('/:id/friend-request', async (req, res) => {
     if (!user) {
       return res.status(404).send(`No se encontró el usuario con id: ${req.params.id}`);
     }
+
+    // Obtener las solicitudes de amistad
     const friendRequests = await usersController.showFriendRequests(id);
 
-    res.status(200).send(friendRequests);
-  } catch (err) {
-    res.status(500).send(`Error al buscar las solicituedes de amistad: ${err}`);
-  }
-});
+    // Filtrar solo las solicitudes con status "pendiente"
+    const pendingRequests = friendRequests.filter(request => request.status === 'pendiente');
 
-/* GET mostrar solicitudes de amistad de un usuario por id */
-router.get('/:id/friend-request', async (req, res) => {
-  const { id } = req.params;
-  try {
-    const user = await usersController.showByID(id);
-    if (!user) {
-      return res.status(404).send(`No se encontró el usuario con id: ${req.params.id}`);
-    }
-    const friendRequests = await usersController.showFriendRequests(id);
+    // Si las solicitudes no traen el username, obtenlo
+    const requestsWithUsernames = await Promise.all(pendingRequests.map(async (request) => {
+      const sender = await usersController.showByID(request.sender_id); // Ajusta según tu modelo
+      return {
+        ...request,
+        sender_username: sender.username // Agrega el username del remitente
+      };
+    }));
 
-    res.status(200).send(friendRequests);
+    // Obtén la lista de todos los usuarios
+    const allUsers = await usersController.show(); // Asegúrate de que este método exista
+
+    // Filtra la lista de usuarios para omitir el usuario actual
+    const users = allUsers.filter(u => u.id !== id);
+
+    // Renderiza la vista 'friend_requests.ejs' pasando el usuario, las solicitudes de amistad y los usuarios filtrados
+    res.status(200).render('friend_requests', { user, friendRequests: requestsWithUsernames, users });
   } catch (err) {
-    res.status(500).send(`Error al buscar las solicituedes de amistad: ${err}`);
+    res.status(500).send(`Error al buscar las solicitudes de amistad: ${err}`);
   }
 });
 

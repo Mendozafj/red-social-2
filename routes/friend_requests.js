@@ -2,18 +2,31 @@ var express = require('express');
 var router = express.Router();
 var friendRequestController = require("../controllers/friend_request.c");
 
-/* POST crear solicitudes de amistad */
 router.post('/', async (req, res) => {
   try {
     const result = await friendRequestController.create(req.body);
     if (result.error) {
-      return res.status(400).send(result.error);
+      return res.status(400).render('error', { message: result.error });
+
     }
-    return res.status(201).send("Solicitud de amistad creada");
+    return res.redirect('/users');
   } catch (error) {
-    res.status(500).send("Error al crear la solicitud de amistad");
+    res.status(500).render('error', { message: "Error al crear la solicitud de amistad" });
   }
 });
+
+router.post('/', async (req, res) => {
+  try {
+    const result = await postsController.create(req.body);
+    if (result.error) {
+      return res.status(400).render('error', { message: result.error });
+    }
+    return res.redirect('/users');
+  } catch (error) {
+    res.status(500).render('error', { message: "Error al crear la publicación" });
+  }
+});
+
 
 /* GET mostrar solicitud de amistad */
 router.get('/', async (req, res) => {
@@ -45,7 +58,7 @@ router.put('/:id', async (req, res) => {
     if (result.error) {
       return res.status(400).send(result.error);
     }
-    res.status(200).send(result);
+    res.status(200).redirect("/users");
   } catch (err) {
     res.status(500).send(`Error al editar la solicitud de amistad: ${err}`);
   }
