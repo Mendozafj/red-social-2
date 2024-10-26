@@ -29,7 +29,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const post = await postsController.showByID(req.params.id);
-    if (!post[0]) {
+    if (!post) {
       return res.status(404).send(`No se encontró la publicación con id: ${req.params.id}`);
     }
     res.status(200).send(post);
@@ -43,7 +43,7 @@ router.get('/:id/comments', async (req, res) => {
   const { id } = req.params;
   try {
     const post = await postsController.showByID(id);
-    if (!post[0]) {
+    if (!post) {
       return res.status(404).send(`No se encontró la publicación con id: ${req.params.id}`);
     }
 
@@ -58,6 +58,7 @@ router.get('/:id/comments', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const result = await postsController.update(req.params.id, req.body);
+    console.log(result)
     if (result.error) {
       return res.status(400).send(result.error);
     }
