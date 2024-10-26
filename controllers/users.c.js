@@ -1,10 +1,9 @@
-var usersModel = require("../models/users.m");
-var postsModel = require("../models/posts.m");
-var friendRequestModel = require("../models/friend_request.m");
-var friendshipsModel = require("../models/friendships.m");
+const usersModel = require("../models/users.m");
+const postsModel = require("../models/posts.m");
+const friendRequestModel = require("../models/friend_request.m");
+const friendshipsModel = require("../models/friendships.m");
 
 class UsersController {
-
   async register(data) {
     const { name, username, password, email } = data;
     if (!name || !username || !password || !email) {
@@ -12,13 +11,18 @@ class UsersController {
     }
 
     try {
-      const user = usersModel.showByUsername(username);
-      if (user.length > 0) {
+      const userByUsername = await usersModel.showByUsername(username);
+      if (userByUsername) {
         return { error: "El nombre de usuario ya está en uso." };
       }
 
+      const userByEmail = await usersModel.showByEmail(email);
+      if (userByEmail) {
+        return { error: "El correo electrónico ya está en uso." };
+      }
+
       const newUser = { name, username, password, email };
-      usersModel.register(newUser);
+      await usersModel.register(newUser);
 
       return { success: true };
     } catch (error) {
@@ -28,7 +32,7 @@ class UsersController {
 
   async show() {
     try {
-      const users = usersModel.show();
+      const users = await usersModel.show(); 
       return users;
     } catch (err) {
       throw new Error(`Error al listar usuarios: ${err}`);
@@ -37,7 +41,10 @@ class UsersController {
 
   async showByID(id) {
     try {
-      const user = usersModel.showByID(id);
+      const user = await usersModel.showByID(id); 
+      if (!user) {
+        return false;
+      }
       return user;
     } catch (err) {
       throw new Error(`Error al buscar usuario: ${err}`);
@@ -46,7 +53,7 @@ class UsersController {
 
   async showByUsername(username) {
     try {
-      const user = usersModel.showByUsername(username);
+      const user = await usersModel.showByUsername(username); 
       return user;
     } catch (err) {
       throw new Error(`Error al buscar usuario: ${err}`);
@@ -55,7 +62,7 @@ class UsersController {
 
   async showPosts(id) {
     try {
-      const posts = postsModel.showByUserID(id);
+      const posts = await postsModel.showByUserID(id); 
       return posts;
     } catch (err) {
       throw new Error(`Error al buscar las publicaciones del usuario: ${err}`);
@@ -64,25 +71,26 @@ class UsersController {
 
   async showFriendRequests(id) {
     try {
-      const friendRequests = friendRequestModel.showByUserID(id);
+      const friendRequests = await friendRequestModel.showByUserID(id); 
       return friendRequests;
     } catch (err) {
-      throw new Error(`Error al buscar las publicaciones del usuario: ${err}`);
+      throw new Error(`Error al buscar las solicitudes de amistad: ${err}`);
     }
   }
 
   async showFriends(id) {
     try {
-      const friendsIds = await friendshipsModel.showByUserID(id);
+      const friendsIds = await friendshipsModel.showByUserID(id); 
 
       if (friendsIds.length === 0) {
         return [];
       }
 
-      const friends = await Promise.all(friendsIds.map(friendId => usersModel.showByID(friendId)));
+      const friends = await Promise.all(
+        friendsIds.map(friendId => usersModel.showByID(friendId)) 
+      );
 
       const flattenedFriends = friends.flat();
-
       return flattenedFriends;
     } catch (err) {
       throw new Error(`Error al buscar los amigos del usuario: ${err}`);
@@ -91,11 +99,14 @@ class UsersController {
 
   async showFeed(id) {
     try {
-      const friends = friendshipsModel.showByUserID(id);
-      const feed = friends
-        .map(friendId => postsModel.getLastPostByUser(friendId))
-        .filter(post => post !== null);
-      return feed;
+      const friends = await friendshipsModel.showByUserID(id); 
+      const feed = await Promise.all(
+        friends.map(async friendId => {
+          const post = await postsModel.getLastPostByUser(friendId); 
+          return post;
+        })
+      );
+      return feed.filter(post => post !== null);
     } catch (err) {
       throw new Error(`Error al obtener el feed de publicaciones: ${err}`);
     }
@@ -105,27 +116,35 @@ class UsersController {
     const { name, username, password, email } = data;
 
     try {
-      const user = usersModel.showByID(id);
-      if (user.length === 0) {
+      const user = await usersModel.showByID(id);
+      if (!user) {
         return { error: `No se encontró el usuario con id: ${id}` };
       }
 
       if (username) {
-        const existingUser = usersModel.showByUsernameExcludingID(username, id);
-        if (existingUser.length > 0) {
+        const existingUser = await usersModel.showByUsernameExcludingID(username, id);
+        if (existingUser) {
           return { error: "El nombre de usuario ya está en uso por otro usuario." };
         }
       }
 
+      if (email) {
+        const existingEmail = await usersModel.showByEmailExcludingID(email, id);
+        if (existingEmail) {
+          return { error: "El correo electrónico ya está en uso por otro usuario." };
+        }
+      }
+
       const updatedUser = {
-        name: name ? name : user.name,
-        username: username ? username : user.username,
-        password: password ? password : user.password,
-        email: email ? email : user.email
+        name: name || user.name,
+        username: username || user.username,
+        password: password || user.password,
+        email: email || user.email
       };
 
-      const result = usersModel.edit(updatedUser, id);
-      return result;
+      await usersModel.edit(updatedUser, id);
+
+      return { success: true };
     } catch (err) {
       throw new Error(`Error al editar el usuario: ${err}`);
     }
@@ -133,13 +152,13 @@ class UsersController {
 
   async delete(id) {
     try {
-      const user = usersModel.showByID(id);
-      if (user.length === 0) {
+      const user = await usersModel.showByID(id); 
+      if (!user) {
         return { error: `No se encontró el usuario con id: ${id}` };
       }
 
-      const result = usersModel.delete(id);
-      return result;
+      await usersModel.delete(id); 
+      return { success: true };
     } catch (err) {
       throw new Error(`Error al eliminar usuario: ${err}`);
     }

@@ -1,67 +1,107 @@
+const pool = require('../config/db');
 const { v4: uuidv4 } = require('uuid');
 
-let usersDB = [
-  {
-    id: 1,
-    username: "fran1",
-    password: "1234",
-    name: "Francisco",
-    email: "francisco@gmail.com"
-  },
-  {
-    id: 2,
-    username: "user2",
-    password: "1234",
-    name: "user 2",
-    email: "user2@gmail.com"
-  },
-  {
-    id: 3,
-    username: "user3",
-    password: "1234",
-    name: "user 3",
-    email: "user3@gmail.com"
-  },
-  {
-    id: 4,
-    username: "user4",
-    password: "1234",
-    name: "user 3",
-    email: "user3@gmail.com"
-  }
-]
-
 class UsersModel {
-  register(user) {
-    user.id = uuidv4();
-    usersDB.push(user);
+  // Método para registrar un nuevo usuario
+  async register(user) {
+    return new Promise((resolve, reject) => {
+      user.id = uuidv4(); // Genera un UUID para el nuevo usuario
+      const query = 'INSERT INTO users (id, username, name, email, password, created_at) VALUES (?, ?, ?, ?, ?, ?)';
+      const values = [user.id, user.username, user.name, user.email, user.password, new Date()];
+
+      pool.query(query, values)
+        .then(([result]) => resolve(result.insertId))
+        .catch(error => reject(error));
+    });
   }
 
-  show() {
-    return usersDB;
+  // Método para mostrar todos los usuarios
+  async show() {
+    return new Promise((resolve, reject) => {
+      const query = 'SELECT * FROM users';
+
+      pool.query(query)
+        .then(([rows]) => resolve(rows))
+        .catch(error => reject(error));
+    });
   }
 
-  showByID(id) {
-    return usersDB.filter(user => user.id == id);
+  // Método para mostrar un usuario por su ID
+  async showByID(id) {
+    return new Promise((resolve, reject) => {
+      const query = 'SELECT * FROM users WHERE id = ?';
+
+      pool.query(query, [id])
+        .then(([rows]) => resolve(rows[0]))
+        .catch(error => reject(error));
+    });
   }
 
-  showByUsername(username) {
-    return usersDB.filter(user => user.username == username);
+  // Método para mostrar un usuario por su nombre de usuario
+  async showByUsername(username) {
+    return new Promise((resolve, reject) => {
+      const query = 'SELECT * FROM users WHERE username = ?';
+
+      pool.query(query, [username])
+        .then(([rows]) => resolve(rows[0]))
+        .catch(error => reject(error));
+    });
   }
 
-  showByUsernameExcludingID(username, id) {
-    return usersDB.filter(user => user.username == username && user.id != id);
+  // Método para mostrar un usuario por su nombre de usuario, excluyendo un ID específico
+  async showByUsernameExcludingID(username, id) {
+    return new Promise((resolve, reject) => {
+      const query = 'SELECT * FROM users WHERE username = ? AND id != ?';
+
+      pool.query(query, [username, id])
+        .then(([rows]) => resolve(rows[0]))
+        .catch(error => reject(error));
+    });
   }
 
-  edit(updatedUser, id) {
-    const index = usersDB.findIndex(user => user.id == id);
-    return usersDB[index] = { id, ...updatedUser };
+  // Método para mostrar un usuario por su correo electrónico
+  async showByEmail(email) {
+    return new Promise((resolve, reject) => {
+      const query = 'SELECT * FROM users WHERE email = ?';
+
+      pool.query(query, [email])
+        .then(([rows]) => resolve(rows[0]))
+        .catch(error => reject(error));
+    });
   }
 
-  delete(id) {
-    const index = usersDB.findIndex(user => user.id == id);
-    usersDB.splice(index, 1);
-    return usersDB;
+  // Método para mostrar un usuario por su correo electrónico, excluyendo un ID específico
+  async showByEmailExcludingID(email, id) {
+    return new Promise((resolve, reject) => {
+      const query = 'SELECT * FROM users WHERE email = ? AND id != ?';
+
+      pool.query(query, [email, id])
+        .then(([rows]) => resolve(rows[0]))
+        .catch(error => reject(error));
+    });
+  }
+
+  // Método para editar un usuario por su ID
+  async edit(updatedUser, id) {
+    return new Promise((resolve, reject) => {
+      const query = 'UPDATE users SET username = ?, name = ?, email = ?, password = ? WHERE id = ?';
+      const values = [updatedUser.username, updatedUser.name, updatedUser.email, updatedUser.password, id];
+
+      pool.query(query, values)
+        .then(([result]) => resolve(result.affectedRows))
+        .catch(error => reject(error));
+    });
+  }
+
+  // Método para eliminar un usuario por su ID
+  async delete(id) {
+    return new Promise((resolve, reject) => {
+      const query = 'DELETE FROM users WHERE id = ?';
+
+      pool.query(query, [id])
+        .then(([result]) => resolve(result.affectedRows))
+        .catch(error => reject(error));
+    });
   }
 }
 
