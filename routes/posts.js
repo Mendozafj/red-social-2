@@ -7,11 +7,11 @@ router.post('/', async (req, res) => {
   try {
     const result = await postsController.create(req.body);
     if (result.error) {
-      return res.status(400).send(result.error);
+      return res.status(400).render('error', { message: result.error });
     }
-    return res.status(201).send("Publicación creada");
+    return res.redirect('/users');
   } catch (error) {
-    res.status(500).send("Error al crear la publicación");
+    res.status(500).render('error', { message: "Error al crear la publicación" });
   }
 });
 
@@ -54,15 +54,26 @@ router.get('/:id/comments', async (req, res) => {
   }
 });
 
+// Obtener la publicación para editar
+router.get('/:id/edit', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const post = await postsController.showByID(id); // Método para obtener la publicación
+
+    res.render('edit_post', { post }); // Renderiza la vista de edición
+  } catch (error) {
+    res.status(500).render('error', { message: "Error al cargar la publicación." });
+  }
+});
+
 /* PUT editar publicación */
 router.put('/:id', async (req, res) => {
   try {
     const result = await postsController.update(req.params.id, req.body);
-    console.log(result)
     if (result.error) {
       return res.status(400).send(result.error);
     }
-    res.status(200).send(result);
+    res.status(200).redirect("/users");
   } catch (err) {
     res.status(500).send(`Error al editar la publicación: ${err}`);
   }
@@ -73,9 +84,9 @@ router.delete('/:id', async (req, res) => {
   try {
     const result = await postsController.delete(req.params.id);
     if (result.error) {
-      return res.status(400).send(result.error);
+      return res.status(400).render('error', { message: result.error });
     }
-    res.status(200).send("Publicación eliminada")
+    return res.redirect('/users');
   } catch (err) {
     res.status(500).send(`Error al eliminar la publicación: ${err}`);
   }
