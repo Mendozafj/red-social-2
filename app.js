@@ -12,6 +12,8 @@ var friendRequestsRouter = require('./routes/friend_requests');
 var friendshipRouter = require('./routes/friendships');
 
 var app = express();
+require('dotenv').config();
+const db = require('./config/db');
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
